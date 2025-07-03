@@ -237,7 +237,22 @@ class Configuration:
     def __init__(self):
         """Initialize configuration by loading from environment variables."""
         # Load environment variables from .env file if it exists
-        load_dotenv()
+        # Try to load from current directory first, then from backend directory
+        import pathlib
+        backend_dir = pathlib.Path(__file__).parent.parent
+        env_files = [
+            pathlib.Path.cwd() / '.env',
+            backend_dir / '.env',
+            pathlib.Path.cwd().parent / 'backend' / '.env'
+        ]
+        
+        for env_file in env_files:
+            if env_file.exists():
+                load_dotenv(env_file)
+                logger.info(f"Loaded environment from: {env_file}")
+                break
+        else:
+            logger.warning("No .env file found")
         
         # Set environment mode first
         env_mode_str = os.getenv("ENV_MODE", EnvMode.LOCAL.value)
@@ -286,11 +301,15 @@ class Configuration:
         # Find missing required fields
         missing_fields = []
         for field, field_type in type_hints.items():
+            # Skip properties and private fields
+            if field.startswith('_') or hasattr(self.__class__, field) and isinstance(getattr(self.__class__, field), property):
+                continue
+                
             # Check if the field is Optional
             is_optional = hasattr(field_type, "__origin__") and field_type.__origin__ is Union and type(None) in field_type.__args__
             
             # If not optional and value is None, add to missing fields
-            if not is_optional and getattr(self, field) is None:
+            if not is_optional and getattr(self, field, None) is None:
                 missing_fields.append(field)
         
         if missing_fields:
