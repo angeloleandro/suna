@@ -134,13 +134,17 @@ if config.ENV_MODE == EnvMode.STAGING:
     allowed_origins.append("https://staging.suna.so")
     allow_origin_regex = r"https://suna-.*-prjcts\.vercel\.app"
 
+# For local development, allow all origins to debug CORS issues
+if config.ENV_MODE == EnvMode.LOCAL:
+    allowed_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-Project-Id"],
+    allow_headers=["*"],
 )
 
 app.include_router(agent_api.router, prefix="/api")
@@ -188,6 +192,24 @@ async def health_check():
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "instance_id": instance_id
     }
+
+@app.get("/api/debug/db")
+async def debug_db():
+    """Debug endpoint to test database connection."""
+    try:
+        client = await db.client
+        # Test a simple query
+        result = await client.table('threads').select('thread_id').limit(1).execute()
+        return {
+            "status": "db_ok",
+            "sample_threads": len(result.data) if result.data else 0,
+            "client_initialized": client is not None
+        }
+    except Exception as e:
+        return {
+            "status": "db_error",
+            "error": str(e)
+        }
 
 class CustomMCPDiscoverRequest(BaseModel):
     type: str

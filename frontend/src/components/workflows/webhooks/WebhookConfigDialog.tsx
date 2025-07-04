@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SlackWebhookConfig } from "./providers/SlackWebhookConfig";
@@ -75,6 +75,9 @@ export function WebhookConfigDialog({
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Configure Webhook</DialogTitle>
+          <DialogDescription>
+            Set up webhook notifications for your workflow events.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">

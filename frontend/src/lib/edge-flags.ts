@@ -18,7 +18,7 @@ export const maintenanceNoticeFlag = flag({
   async decide() {
     try {
       if (!process.env.EDGE_CONFIG) {
-        console.warn('Edge config is not set');
+        // Silently return false for local development - no need to warn
         return { enabled: false } as const;
       }
 

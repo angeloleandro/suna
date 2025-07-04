@@ -25,6 +25,7 @@ import { KnowledgeBaseManager } from "@/components/thread/knowledge-base/knowled
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -298,6 +299,9 @@ export function SiteHeader({
                 <Book className="h-5 w-5" />
                 Knowledge Base
               </DialogTitle>
+              <DialogDescription>
+                Manage your knowledge base documents and resources.
+              </DialogDescription>
             </DialogHeader>
             <div className="flex-1 overflow-y-auto p-6">
               <KnowledgeBaseManager threadId={threadId} />

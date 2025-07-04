@@ -22,6 +22,7 @@ export function KortixLogo({ size = 24 }: KortixLogoProps) {
         alt="Kortix"
         width={size}
         height={size}
+        style={{ width: `${size}px`, height: `${size}px` }}
         className={`${mounted && theme === 'dark' ? 'invert' : ''} flex-shrink-0`}
       />
   );

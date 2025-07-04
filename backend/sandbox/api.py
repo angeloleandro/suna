@@ -99,9 +99,21 @@ async def verify_sandbox_access(client, sandbox_id: str, user_id: Optional[str] 
     
     # Verify account membership
     if account_id:
-        account_user_result = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', account_id).execute()
-        if account_user_result.data and len(account_user_result.data) > 0:
-            return project_data
+        try:
+            # Try to use basejump schema if available
+            account_user_result = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', account_id).execute()
+            if account_user_result.data and len(account_user_result.data) > 0:
+                return project_data
+        except Exception as e:
+            # Fallback for local development when basejump schema is not exposed
+            from utils.config import config, EnvMode
+            if config.ENV_MODE == EnvMode.LOCAL:
+                logger.info(f"Basejump schema not available for sandbox access, using local fallback. Account ID: {account_id}, User ID: {user_id}")
+                if user_id == account_id:
+                    return project_data
+            else:
+                logger.error(f"Failed to check account membership in basejump schema for sandbox access: {e}")
+                raise e
     
     raise HTTPException(status_code=403, detail="Not authorized to access this sandbox")
 
@@ -361,10 +373,23 @@ async def ensure_project_sandbox_active(
         
         # Verify account membership
         if account_id:
-            account_user_result = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', account_id).execute()
-            if not (account_user_result.data and len(account_user_result.data) > 0):
-                logger.error(f"User {user_id} not authorized to access project {project_id}")
-                raise HTTPException(status_code=403, detail="Not authorized to access this project")
+            try:
+                # Try to use basejump schema if available
+                account_user_result = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', account_id).execute()
+                if not (account_user_result.data and len(account_user_result.data) > 0):
+                    logger.error(f"User {user_id} not authorized to access project {project_id}")
+                    raise HTTPException(status_code=403, detail="Not authorized to access this project")
+            except Exception as e:
+                # Fallback for local development when basejump schema is not exposed
+                from utils.config import config, EnvMode
+                if config.ENV_MODE == EnvMode.LOCAL:
+                    logger.info(f"Basejump schema not available for sandbox, using local fallback. Account ID: {account_id}, User ID: {user_id}")
+                    if user_id != account_id:
+                        logger.error(f"User {user_id} not authorized to access project {project_id} (local fallback)")
+                        raise HTTPException(status_code=403, detail="Not authorized to access this project")
+                else:
+                    logger.error(f"Failed to check account membership in basejump schema for project {project_id}: {e}")
+                    raise e
     
     try:
         # Get sandbox ID from project data

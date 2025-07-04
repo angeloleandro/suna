@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -220,6 +220,9 @@ export function ScheduleConfigDialog({
             <Clock className="h-5 w-5" />
             Schedule Your Workflow
           </DialogTitle>
+          <DialogDescription>
+            Set up automated execution schedule for your workflow.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden">

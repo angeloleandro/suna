@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, Fragment, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -1197,9 +1198,14 @@ export function FileViewerModal({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[90vw] md:max-w-[1200px] w-[95vw] h-[90vh] max-h-[900px] flex flex-col p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-4 py-2 border-b flex-shrink-0 flex flex-row gap-4 items-center">
-          <DialogTitle className="text-lg font-semibold">
-            Workspace Files
-          </DialogTitle>
+          <div className="flex flex-col gap-1">
+            <DialogTitle className="text-lg font-semibold">
+              Workspace Files
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Browse and manage files in your workspace
+            </DialogDescription>
+          </div>
 
           {/* Download progress display */}
           {downloadProgress && (

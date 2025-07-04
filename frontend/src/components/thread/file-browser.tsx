@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -134,6 +135,9 @@ export function FileBrowser({
       <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Sandbox Files</DialogTitle>
+          <DialogDescription>
+            Browse and select files from your sandbox environment.
+          </DialogDescription>
         </DialogHeader>
 
         {/* Breadcrumbs */}

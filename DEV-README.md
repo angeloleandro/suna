@@ -118,6 +118,9 @@ pip install -e .
 cd frontend
 npm install
 ```
+Build:
+```bash
+cd frontend; npm run build
 
 ### 3. Setup dos Serviços (Redis e RabbitMQ)
 

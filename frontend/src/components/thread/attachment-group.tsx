@@ -8,6 +8,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle
 } from '@/components/ui/dialog';
@@ -361,6 +362,9 @@ export function AttachmentGroup({
                         <DialogTitle>
                             <span>All Files ({uniqueFiles.length})</span>
                         </DialogTitle>
+                        <DialogDescription>
+                            View all attached files in this conversation.
+                        </DialogDescription>
                     </DialogHeader>
 
                     <div className={cn(

@@ -123,6 +123,18 @@ async def set_flag(key: str, enabled: bool, description: str = "") -> bool:
 
 
 async def is_enabled(key: str) -> bool:
+    # In local development mode, enable certain flags by default
+    if os.getenv('ENV_MODE', '').lower() == 'local':
+        # Always enable these flags in local mode for development
+        local_enabled_flags = [
+            'custom_agents',
+            'agent_marketplace', 
+            'workflows',
+            'mcp_tools'
+        ]
+        if key in local_enabled_flags:
+            return True
+    
     return await get_flag_manager().is_enabled(key)
 
 

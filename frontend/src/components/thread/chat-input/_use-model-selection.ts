@@ -4,12 +4,12 @@ import { useSubscription } from '@/hooks/react-query/subscriptions/use-subscript
 import { useState, useEffect, useMemo } from 'react';
 import { isLocalMode } from '@/lib/config';
 import { useAvailableModels } from '@/hooks/react-query/subscriptions/use-model';
+import { OPENROUTER_LLM_LIST } from '@/data/openrouter-models';
 
 export const STORAGE_KEY_MODEL = 'suna-preferred-model-v2';
 export const STORAGE_KEY_CUSTOM_MODELS = 'customModels';
-export const DEFAULT_PREMIUM_MODEL_ID = 'claude-sonnet-4';
-// export const DEFAULT_FREE_MODEL_ID = 'deepseek';
-export const DEFAULT_FREE_MODEL_ID = 'claude-sonnet-4';
+export const DEFAULT_PREMIUM_MODEL_ID = 'anthropic/claude-sonnet-4';
+export const DEFAULT_FREE_MODEL_ID = 'deepseek/deepseek-chat-v3-0324';
 
 export type SubscriptionStatus = 'no_subscription' | 'active';
 
@@ -28,124 +28,26 @@ export interface CustomModel {
   label: string;
 }
 
-// SINGLE SOURCE OF TRUTH for all model data
-export const MODELS = {
-  // Premium high-priority models
-  'claude-sonnet-4': { 
-    tier: 'free',
-    priority: 100, 
-    recommended: true,
-    lowQuality: false,
-    description: 'Claude Sonnet 4 - Anthropic\'s latest and most advanced AI assistant'
-  },
-  'google/gemini-2.5-pro': { 
-    tier: 'premium', 
-    priority: 100,
-    recommended: false,
-    lowQuality: false,
-    description: 'Gemini Pro 2.5 - Google\'s latest advanced model'
-  },
-  'sonnet-3.7': { 
-    tier: 'premium', 
-    priority: 95, 
-    recommended: false,
-    lowQuality: false,
-    description: 'Claude 3.7 - Anthropic\'s most powerful AI assistant'
-  },
-  'claude-sonnet-3.7-reasoning': { 
-    tier: 'premium', 
-    priority: 95, 
-    recommended: true,
-    lowQuality: false,
-    description: 'Claude 3.7 with enhanced reasoning capabilities'
-  },
-  'gpt-4.1': { 
-    tier: 'premium', 
-    priority: 95,
-    recommended: false,
-    lowQuality: false,
-    description: 'GPT-4.1 - OpenAI\'s most advanced model with enhanced reasoning'
-  },
-  'claude-3.5': { 
-    tier: 'premium', 
-    priority: 90,
-    recommended: true,
-    lowQuality: false,
-    description: 'Claude 3.5 - Anthropic\'s balanced model with solid capabilities'
-  },
-  'gemini-2.5-flash:thinking': { 
-    tier: 'premium', 
-    priority: 90,
-    recommended: false,
-    lowQuality: false,
-    description: 'Gemini Flash 2.5 - Google\'s fast, responsive AI model'
-  },
-  'gpt-4o': { 
-    tier: 'premium', 
-    priority: 85,
-    recommended: false,
-    lowQuality: false,
-    description: 'GPT-4o - Optimized for speed, reliability, and cost-effectiveness'
-  },
-  'gpt-4-turbo': { 
-    tier: 'premium', 
-    priority: 85,
-    recommended: false,
-    lowQuality: false,
-    description: 'GPT-4 Turbo - OpenAI\'s powerful model with a great balance of performance and cost'
-  },
-  'gpt-4': { 
-    tier: 'premium', 
-    priority: 80,
-    recommended: false,
-    lowQuality: false,
-    description: 'GPT-4 - OpenAI\'s highly capable model with advanced reasoning'
-  },
-  'deepseek/deepseek-chat-v3-0324': { 
-    tier: 'premium', 
-    priority: 75,
-    recommended: false,
-    lowQuality: false,
-    description: 'DeepSeek Chat - Advanced AI assistant with strong reasoning'
-  },
+// SINGLE SOURCE OF TRUTH for all model data - Using OpenRouter models
+export const MODELS = OPENROUTER_LLM_LIST.reduce((acc, model) => {
+  const isFree = model.pricing.inputCost === 0 && model.pricing.outputCost === 0;
+  const priority = isFree ? 70 : 
+                  model.hasReflection ? 95 : 
+                  model.imageInput ? 85 : 80;
   
-  // Free tier models
-  'deepseek-r1': { 
-    tier: 'free', 
-    priority: 60,
-    recommended: false,
+  acc[model.modelId] = {
+    tier: isFree ? 'free' : 'premium',
+    priority,
+    recommended: model.hasReflection || model.modelName.includes('Claude') || model.modelName.includes('GPT'),
     lowQuality: false,
-    description: 'DeepSeek R1 - Advanced model with enhanced reasoning and coding capabilities'
-  },
-  'deepseek': { 
-    tier: 'free', 
-    priority: 50,
-    recommended: false,
-    lowQuality: true,
-    description: 'DeepSeek - Free tier model with good general capabilities'
-  },
-  'gemini-flash-2.5': { 
-    tier: 'free', 
-    priority: 50,
-    recommended: false,
-    lowQuality: true,
-    description: 'Gemini Flash - Google\'s faster, more efficient model'
-  },
-  'grok-3-mini': { 
-    tier: 'free', 
-    priority: 45,
-    recommended: false,
-    lowQuality: true,
-    description: 'Grok-3 Mini - Smaller, faster version of Grok-3 for simpler tasks'
-  },
-  'qwen3': { 
-    tier: 'free', 
-    priority: 40,
-    recommended: false,
-    lowQuality: true,
-    description: 'Qwen3 - Alibaba\'s powerful multilingual language model'
-  },
-};
+    description: model.description,
+    imageInput: model.imageInput,
+    webSearchSupported: model.webSearchSupported,
+    hasReflection: model.hasReflection || false,
+    pricing: model.pricing
+  };
+  return acc;
+}, {} as Record<string, any>);
 
 // Model tier definitions
 export const MODEL_TIERS = {
@@ -247,64 +149,29 @@ export const useModelSelection = () => {
     refreshCustomModels();
   }, []);
 
-  // Generate model options list with consistent structure
+  // Generate model options list with consistent structure - Using only OpenRouter models
   const MODEL_OPTIONS = useMemo(() => {
-    let models = [];
-    
-    // Default models if API data not available
-    if (!modelsData?.models || isLoadingModels) {
-      models = [
-        { 
-          id: DEFAULT_FREE_MODEL_ID, 
-          label: 'DeepSeek', 
-          requiresSubscription: false,
-          description: MODELS[DEFAULT_FREE_MODEL_ID]?.description || MODEL_TIERS.free.baseDescription,
-          priority: MODELS[DEFAULT_FREE_MODEL_ID]?.priority || 50
-        },
-        { 
-          id: DEFAULT_PREMIUM_MODEL_ID, 
-          label: 'Claude Sonnet 4', 
-          requiresSubscription: true, 
-          description: MODELS[DEFAULT_PREMIUM_MODEL_ID]?.description || MODEL_TIERS.premium.baseDescription,
-          priority: MODELS[DEFAULT_PREMIUM_MODEL_ID]?.priority || 100
-        },
-      ];
-    } else {
-      // Process API-provided models
-      models = modelsData.models.map(model => {
-        const shortName = model.short_name || model.id;
-        const displayName = model.display_name || shortName;
-        
-        // Format the display label
-        let cleanLabel = displayName;
-        if (cleanLabel.includes('/')) {
-          cleanLabel = cleanLabel.split('/').pop() || cleanLabel;
-        }
-        
-        cleanLabel = cleanLabel
-          .replace(/-/g, ' ')
-          .split(' ')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
-        
-        // Get model data from our central MODELS constant
-        const modelData = MODELS[shortName] || {};
-        const isPremium = model?.requires_subscription || modelData.tier === 'premium' || false;
-        
-        return {
-          id: shortName,
-          label: cleanLabel,
-          requiresSubscription: isPremium,
-          description: modelData.description || 
-            (isPremium ? MODEL_TIERS.premium.baseDescription : MODEL_TIERS.free.baseDescription),
-          top: modelData.priority >= 90, // Mark high-priority models as "top"
-          priority: modelData.priority || 0,
-          lowQuality: modelData.lowQuality || false,
-          recommended: modelData.recommended || false
-        };
-      });
-    }
-    
+    // Convert OpenRouter models to the expected format
+    let models = OPENROUTER_LLM_LIST.map(model => {
+      const modelData = MODELS[model.modelId] || {};
+      const isFree = model.pricing.inputCost === 0 && model.pricing.outputCost === 0;
+      
+      return {
+        id: model.modelId,
+        label: model.modelName,
+        requiresSubscription: !isFree,
+        description: model.description,
+        top: modelData.priority >= 90,
+        priority: modelData.priority || 0,
+        lowQuality: false,
+        recommended: modelData.recommended || false,
+        imageInput: model.imageInput,
+        webSearchSupported: model.webSearchSupported,
+        hasReflection: model.hasReflection || false,
+        pricing: model.pricing
+      };
+    });
+
     // Add custom models if in local mode
     if (isLocalMode() && customModels.length > 0) {
       const customModelOptions = customModels.map(model => ({
@@ -314,22 +181,28 @@ export const useModelSelection = () => {
         description: MODEL_TIERS.custom.baseDescription,
         top: false,
         isCustom: true,
-        priority: 30, // Low priority by default
+        priority: 30,
         lowQuality: false,
-        recommended: false
+        recommended: false,
+        imageInput: false,
+        webSearchSupported: true,
+        hasReflection: false,
+        pricing: {
+          currency: "USD",
+          unit: "1M tokens",
+          inputCost: 0,
+          outputCost: 0
+        }
       }));
       
       models = [...models, ...customModelOptions];
     }
-    
-    // Sort models consistently in one place:
-    // 1. First by free/premium (free first)
-    // 2. Then by priority (higher first)
-    // 3. Finally by name (alphabetical)
+
+    // Sort models: free first, then by priority, then by name
     const sortedModels = models.sort((a, b) => {
-      // First by free/premium status
+      // First by free/premium status (free first)
       if (a.requiresSubscription !== b.requiresSubscription) {
-        return a.requiresSubscription ? -1 : 1;
+        return a.requiresSubscription ? 1 : -1;
       }
 
       // Then by priority (higher first)
@@ -340,6 +213,7 @@ export const useModelSelection = () => {
       // Finally by name
       return a.label.localeCompare(b.label);
     });
+
     return sortedModels;
   }, [modelsData, isLoadingModels, customModels]);
 

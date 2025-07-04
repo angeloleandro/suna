@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -72,6 +73,9 @@ export function ChatSettingsDialog({
             <Settings className="h-5 w-5" />
             Chat Settings
           </DialogTitle>
+          <DialogDescription>
+            Configure your AI model and chat preferences.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6 py-4">

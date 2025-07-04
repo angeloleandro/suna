@@ -42,6 +42,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -395,6 +396,9 @@ export const KnowledgeBaseManager = ({ threadId }: KnowledgeBaseManagerProps) =>
               <FileText className="h-5 w-5" />
               {editDialog.entry ? 'Edit Knowledge Entry' : 'Add Knowledge Entry'}
             </DialogTitle>
+            <DialogDescription>
+              {editDialog.entry ? 'Update your knowledge base entry details.' : 'Add a new entry to your knowledge base.'}
+            </DialogDescription>
           </DialogHeader>
           
           <div className="flex-1 overflow-y-auto">
